@@ -1,4 +1,4 @@
-# detection_segmentation
+# card_game_29
 
 ## Task
 The task is to perform semantic segmentation on cityscape dataset.
