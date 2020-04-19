@@ -2,10 +2,10 @@ from Module import *
 
 deckofCard = DeckOfCards()
 #name, bid, hand, score, bidpass = False
-Player1 = player("Man1", 0, None, 0, False)
-Player2 = player("Man2", 0, None, 0, False)
-Player3 = player("Man3", 0, None, 0, False)
-Player4 = player("Man4", 0, None, 0, False)
+Player1 = player("Player_1", 0, None, 0, False)
+Player2 = player("Player_2", 0, None, 0, False)
+Player3 = player("Player_3", 0, None, 0, False)
+Player4 = player("Player_4", 0, None, 0, False)
 
 PlayerSet = (Player1, Player2, Player3, Player4)
 Team1 = (Player1.name, Player3.name)
@@ -16,14 +16,14 @@ deckofCard.shuffleDeck()
 print("DISTRIBUTING 4 CARDS PER PLAYER")
 PlayerSet = deckofCard.dealCards(PlayerSet)
 
-print("BETTING ROUND")
+FirstBidRound = BiddingRound(PlayerSet)
+FirstBidRound.startBiddingRound()
+HigherBidder = FirstBidRound.DeclareBidWinner(Team1)
+# HigherBid, HigherBidder = startBiddingRound(PlayerSet)
+# DeclareBidWinner(HigherBid, HigherBidder, Team1)
 
-HigherBid, HigherBidder = BiddingRound(PlayerSet)
-DeclareBidWinner(HigherBid, HigherBidder, Team1)
-
-print("SETTING TRUMP")
-
-TrumpSuite = SetTrump(HigherBidder)
+FirstRound = PlayRound()
+TrumpSuite = FirstRound.SetTrump(HigherBidder)
 
 print("DEALING REMAINING CARDS")
 PlayerSet = deckofCard.dealCards(PlayerSet)
@@ -50,6 +50,7 @@ for player in PlayerSet:
         except ValueError:
             print("Please provide integer input")
     cardsInATurn[player.name] = player.hand[CardPlayed]
+CalcHandWinner(cardsInATurn)
 
 print(cardsInATurn)
-print(cardsInATurn['Man1'].cardScore)
+print(cardsInATurn['Player_1'].score)

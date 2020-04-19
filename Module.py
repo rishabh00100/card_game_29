@@ -8,15 +8,18 @@ VALIDITY = 1
 
 class Card:
     """Creating an object for each card
-    has 2 attributes:
+    has following attributes:
     Value = Face Value of the card
     Color = Corresponding to one of the 4 suits in a card deck
+    Score = Score of the card in this game
+    win_priority = priority of the card in deciding hand winner
     Validity = 1 if card is valid to play in that turn else 0
     """
     def __init__(self, value, color, validity):
         self.value = value
         self.color = color
         self.validity = validity
+        self.setCardScore()
 
     def flip(self):
         """
@@ -30,26 +33,39 @@ class Card:
         """
         return "{rank} of {suit}".format(rank=self.value, suit=self.color)
 
-    def cardScore(self):
+    def setCardScore(self):
         """
         Returns a string containing the card's name in common terms.
         """
         if self.value == 'Jack':
-            score = 3
+            self.score = 3
+            self.win_priority = 1
         elif self.value == '9':
-            score = 2
+            self.score = 2
+            self.win_priority = 2
         elif self.value == 'Ace':
-            score = 1
+            self.score = 1
+            self.win_priority = 3
         elif self.value == '10':
-            score = 1
-        else:
-            score = 0
-        return score
+            self.score = 1
+            self.win_priority = 4
+        elif self.value == 'King':
+            self.score = 0
+            self.win_priority = 5
+        elif self.value == 'Queen':
+            self.score = 0
+            self.win_priority = 6
+        elif self.value == '8':
+            self.score = 0
+            self.win_priority = 7
+        elif self.value == '7':
+            self.score = 0
+            self.win_priority = 8
 
 class DeckOfCards:
 
     def __init__(self):
-        self.contents = []
+        # Initializes a dexk of card for 29 card game
         self.contents = [Card(value, color, VALIDITY) for value in VALUES for color in COLORS]
 
     def shuffleDeck(self):
@@ -80,30 +96,57 @@ class DeckOfCards:
         return PlayerSet
 
 class player(object):
+    """Creating an object for each player
+    has following attributes:
+    name = Name of the player
+    hand = current set of cards that the player is holding
+    score = score of the hands owned by this player
+    bid = total points that this player has bid for
+    bidpass = flag representing if the player has passed in the current bidding round
+    """
     def __init__(self, name, bid, hand, score, bidpass):
         self.name = name
         self.hand = []
         self.bid = bid
         self.score = score
         self.bidpass = bidpass
+
     def getScore(self):
         return self.score
+
     def getHand(self):
         return  self.hand
+
+    def calcScoreOfHand(self):
+        score = 0
+        for each_card in self.hand:
+            score += each_card.score
+        return score
+
+    def printScoreOfHand(self):
+        score = self.calcScoreOfHand()
+        print("{player_name}, you are having cards worth {total_score} points".format(player_name=self.name, total_score=score))
+
     def printScore(self):
         print("Score of player: {score}".format(score = self.score))
+
     def showHand(self):
         size = len(self.hand)
         for i in range(0, size):
             self.hand[i].flip()
+
     def showHandToPlay(self):
         size = len(self.hand)
         for i in range(0, size):
             print("Press {i} for {card}".format(i = i, card = self.hand[i].cardName()))
+
     def getBet(self, Opponent_Bet):
         playerBet = -1
         while not playerBet in [range(0, MAXIMUM_BET+1)]:
             try:
+                print("{player_name}, this is your hand for reference".format(player_name=self.name))
+                self.showHand()
+                self.printScoreOfHand()
                 playerBet = int(input("%s Please input your bet between %s and %s or input 0 to pass/end betting:" %(self.name, Opponent_Bet + 1, MAXIMUM_BET)))
             except ValueError:
                 """
@@ -125,116 +168,93 @@ class player(object):
         else:
             return False
 
-def setBid(Bid, BidderName):
-    HigherBid = Bid
-    HigherBidder = BidderName
-    return HigherBid, HigherBidder
+class BiddingRound:
+    """
+    Class for biding rounds
+    """
+    def __init__(self, PlayerSet):
+        print("***************STARTING BETTING ROUND***************")
+        self.PassCounter = 0
+        self.FirstBidder, self.SecondBidder = 0, 1
+        self.HigherBid = 0
+        self.HigherBidder = PlayerSet[0].name
+        self.Bidder1High = True
+        self.PlayerSet = PlayerSet
 
-def isAllPlayerPass(PlayerSet, passCounter):
-    if passCounter == len(PlayerSet):
-        return True
-    else:
-        return False
+    def startBiddingRound(self):
+        self.FirstBidder, self.SecondBidder = self.biddingModule(self.FirstBidder, self.SecondBidder, MINIMUM_BET)
 
-def AllPlayerPassCondition(PlayerSet, PassCounter, HigherBid, HigherBidder):
-    if isAllPlayerPass(PlayerSet, PassCounter):
-        HigherBid, HigherBidder = setBid(MINIMUM_BET, PlayerSet[0].name)
-        PlayerSet[0].bid = HigherBid
-    else:
-        HigherBid, HigherBidder = setBid(HigherBid, HigherBidder)
-    return PlayerSet, HigherBid, HigherBidder
+    def biddingModule(self, FirstBidder, SecondBidder, newBid):
+        while self.Bidder1High == True:
+            newerBid, newerBidder = self.setBid(self.PlayerSet[FirstBidder].getBet(newBid), self.PlayerSet[FirstBidder].name)
+            if self.PlayerSet[FirstBidder].isBidPass(newerBid):
+                self.PassCounter = self.PassCounter + 1
+                self.PlayerSet[FirstBidder].bidpass = True
+                self.PlayerSet = self.AllPlayerPassCondition()
+                FirstBidder, SecondBidder = self.incrementBidder(FirstBidder, SecondBidder, self.HigherBid)
+                if self.BidExitCondition():
+                    self.Bidder1High = False
+                    break
+                FirstBidder, SecondBidder = self.biddingModule(FirstBidder, SecondBidder, newBid)
+            else:
+                self.HigherBid, self.HigherBidder = self.setBid(newerBid, newerBidder)
+                self.PlayerSet[FirstBidder].bid = self.HigherBid
+                if self.HigherBid == MAXIMUM_BET:
+                    self.Bidder1High = False
+                    break
+                FirstBidder, SecondBidder = self.biddingModule(SecondBidder, FirstBidder, newerBid)
+        return FirstBidder, SecondBidder
 
-def incrementBidder(FirstBidder, SecondBidder, HigherBid):
-    FirstBidder = FirstBidder
-    SecondBidder = SecondBidder
-    if FirstBidder < SecondBidder and HigherBid > 0:
-        FirstBidder = SecondBidder + 1
-    elif FirstBidder < SecondBidder and HigherBid == 0:
-        FirstBidder = FirstBidder + 1
-        SecondBidder = SecondBidder + 1
-    elif FirstBidder > SecondBidder:
-        FirstBidder = FirstBidder + 1
-    return FirstBidder, SecondBidder
+    def setBid(self, Bid, BidderName):
+        self.HigherBid = Bid
+        self.HigherBidder = BidderName
+        return self.HigherBid, self.HigherBidder
 
-def BidExitCondition(PassCounter, HigherBid):
-    if PassCounter >= 3 and HigherBid > 0:
-        return True
-    else:
-        return False
-
-def biddingModule(PlayerSet, FirstBidder, SecondBidder, newBid, PassCounter, HigherBidder, HigherBid, Bidder1High):
-    while Bidder1High == True:
-        newerBid, newerBidder = setBid(PlayerSet[FirstBidder].getBet(newBid), PlayerSet[FirstBidder].name)
-        if PlayerSet[FirstBidder].isBidPass(newerBid):
-            PassCounter = PassCounter + 1
-            PlayerSet[FirstBidder].bidpass = True
-            PlayerSet, HigherBid, HigherBidder = AllPlayerPassCondition(PlayerSet, PassCounter, HigherBid, HigherBidder)
-            FirstBidder, SecondBidder = incrementBidder(FirstBidder, SecondBidder, HigherBid)
-            if BidExitCondition(PassCounter, HigherBid):
-                Bidder1High = False
-                break
-            HigherBid, HigherBidder, FirstBidder, SecondBidder, Bidder1High = biddingModule(PlayerSet, FirstBidder, SecondBidder,
-                                                                                            newBid, PassCounter, HigherBidder,
-                                                                                            HigherBid, Bidder1High)
+    def isAllPlayerPass(self):
+        if self.PassCounter == len(self.PlayerSet):
+            return True
         else:
-            HigherBid, HigherBidder = setBid(newerBid, newerBidder)
-            PlayerSet[FirstBidder].bid = HigherBid
-            if HigherBid == MAXIMUM_BET:
-                Bidder1High = False
-                break
-            HigherBid, HigherBidder, FirstBidder, SecondBidder, Bidder1High = biddingModule(PlayerSet, SecondBidder, FirstBidder,
-                                                                                            newerBid, PassCounter, HigherBidder,
-                                                                                            HigherBid, Bidder1High)
-    return HigherBid, HigherBidder, FirstBidder, SecondBidder, Bidder1High
+            return False
+
+    def AllPlayerPassCondition(self):
+        if self.isAllPlayerPass():
+            self.HigherBid, self.HigherBidder = self.setBid(MINIMUM_BET, self.PlayerSet[0].name)
+            self.PlayerSet[0].bid = self.HigherBid
+        else:
+            self.HigherBid, self.HigherBidder = self.setBid(self.HigherBid, self.HigherBidder)
+        return self.PlayerSet
+
+    def incrementBidder(self, FirstBidder, SecondBidder, HigherBid):
+        FirstBidder = FirstBidder
+        SecondBidder = SecondBidder
+        if FirstBidder < SecondBidder and HigherBid > 0:
+            FirstBidder = SecondBidder + 1
+        elif FirstBidder < SecondBidder and HigherBid == 0:
+            FirstBidder = FirstBidder + 1
+            SecondBidder = SecondBidder + 1
+        elif FirstBidder > SecondBidder:
+            FirstBidder = FirstBidder + 1
+        return FirstBidder, SecondBidder
+
+    def BidExitCondition(self):
+        if self.PassCounter >= 3 and self.HigherBid > 0:
+            return True
+        else:
+            return False
+
+    def DeclareBidWinner(self, Team1):
+        if self.HigherBidder in Team1:
+            print("Team 1 won the betting round and will play to make %s points" % self.HigherBid)
+            print("%s will set the trump" % self.HigherBidder)
+            print("Team 2 has to make %s points to win" % (30 - self.HigherBid))
+        else:
+            print("Team 2 won the betting round and will play to make %s points" % self.HigherBid)
+            print("%s will set the trump" % self.HigherBidder)
+            print("Team 1 has to make %s points to win" % (30 - self.HigherBid))
+        return self.HigherBidder
 
 
-# print('***********STATUS AFTER VALID BID********')
-# print('HigherBidder:', HigherBidder)
-# print('HigherBid:', HigherBid)
-# print('FirstBidder:', FirstBidder)
-# print('SecondBidder:', SecondBidder)
-# print('FirstBidder + SecondBidder:', (FirstBidder + SecondBidder))
 
-def BiddingRound(PlayerSet):
-    PassCounter = 0
-    FirstBidder = 0
-    SecondBidder = 1
-    HigherBid = 0
-    HigherBidder = PlayerSet[0].name
-    Bidder1High = True
-    HigherBid, HigherBidder, FirstBidder, SecondBidder, Bidder1High = biddingModule(PlayerSet, FirstBidder, SecondBidder,
-                                                                                                  MINIMUM_BET, PassCounter, HigherBidder,
-                                                                                                  HigherBid, Bidder1High)
-    return HigherBid, HigherBidder
-
-def DeclareBidWinner(Bid, BidderName, Team1):
-    if BidderName in Team1:
-        print("Team 1 won the betting round and will play to make %s points" % Bid)
-        print("%s will set the trump" % BidderName)
-        print("Team 2 has to make %s points to win" % (30 - Bid))
-    else:
-        print("Team 2 won the betting round and will play to make %s points" % Bid)
-        print("%s will set the trump" % BidderName)
-        print("Team 1 has to make %s points to win" % (30 - Bid))
-
-def SetTrump(SetterName):
-    print("%s, please select the trump from the below mentioned choices:" % SetterName)
-    print("Press 1 for Heart")
-    print("Press 2 for Diamonds")
-    print("Press 3 for Spades")
-    print("Press 4 for Clubs")
-    TrumpSuite = 0
-    while not TrumpSuite in range(1, len(COLORS) + 1):
-        try:
-            TrumpSuite = int(input("Enter the trump suite:"))
-        except ValueError:
-            """
-            Error handling when input not an integer
-            """
-            print("That wasn't an integer :(")
-    return COLORS[TrumpSuite - 1]
-
-# def isTrumpOpen(TrumpIsOpenFlag):
 def isTrumpValid(isTrumpOpen, TrumpSuite, card_color):
     if isTrumpOpen == True and card_color == TrumpSuite:
         return True
@@ -272,3 +292,49 @@ def getValidIndex(ValidCards):
         if ValidCards[i].validity == 1:
             valid_moves.append(i)
     return valid_moves
+
+class PlayRound:
+    def __init__(self):
+        print("***************LETS START THE GAME***************")
+
+    def SetTrump(self, SetterName):
+        print("SETTING TRUMP")
+        print("%s, please select the trump from the below mentioned choices:" % SetterName)
+        print("Press 1 for Heart")
+        print("Press 2 for Diamonds")
+        print("Press 3 for Spades")
+        print("Press 4 for Clubs")
+        TrumpSuite = 0
+        while not TrumpSuite in range(1, len(COLORS) + 1):
+            try:
+                TrumpSuite = int(input("Enter the trump suite:"))
+            except ValueError:
+                """
+                Error handling when input not an integer
+                """
+                print("That wasn't an integer :(")
+        return COLORS[TrumpSuite - 1]
+
+def filterPassCards(listOfCards):
+    # Remove all the cards that are played as pass
+    # This is because pass cards cannot win the hand
+    return
+
+def filterForTrumpCards(listOfCards):
+    # Return all the trump cards in this hand
+    # If no trump card is played, return all cards
+    return
+
+def selectWinningCard(listOfCards):
+    listOfCards = filterPassCards(listOfCards)
+    listOfCards = filterForTrumpCards(listOfCards)
+    listOfPriorities = [i.win_priority for i in listOfCards]
+    winningPriority = min(listOfPriorities)
+    for each_card in listOfCards:
+        if each_card.win_priority == winningPriority:
+            return each_card
+
+def CalcHandWinner(cardsInATurn):
+    listOfCards = cardsInATurn.values()
+    winningCard = selectWinningCard(listOfCards)
+    winningPlayer = cardsInATurn.get(winningCard)
