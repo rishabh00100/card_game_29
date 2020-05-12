@@ -1,9 +1,13 @@
 # card_game_29
 
-## Task
-The task is to perform semantic segmentation on cityscape dataset.
-This dataset will be modified in a fashion such that it have only 2 classes:
-1. Foreground - The object of interest
-2. Background - The environment
+## Coding my all time favourite card game "29" on python
+The reason I picked up this project:
+1. It involved various stages like bidding, playing, score counting
+2. It gives me opportunity to gain command on concepts like object oriented programming, recursion, nested classes
 
-Atleast 2 segmentation models will be used to train on this dataset and benchmarked for accuracy
+This is still WIP
+
+Status: Completed the code for bidding stage. Code for gameplay in progress
+
+Rules of the game:
+https://www.pagat.com/jass/29.html
