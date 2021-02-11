@@ -55,35 +55,72 @@ class Player(object):
         for i in range(0, size):
             print(self.hand[i])
 
-    def showHandToPlay(self):
+    def showHandToPlay(self, round_number):
         size = len(self.hand)
+        valid_index = []
         for i in range(0, size):
             if self.hand[i].validity == 1:
                 print("Press {i} for {card}".format(i = i, card = self.hand[i]))
+                valid_index.append(i)
+        player_input_card = int(self.update_GC_state(state=4, valid_index=valid_index, r_index=round_number))
+        return player_input_card
 
-    def getBet(self, Opponent_Bet, MAXIMUM_BET):
+    def update_GC_state(self, state, **kwargs):
+        action_line = None
+        heading = None
+        sub_heading = None
+        allowed_inputs = None
+        show_img = True
+        if state == 1:
+            stage_name = "Bidding Phase - {}".format(kwargs["r_index"])
+            heading = "{}, do you want to bid for {} points or pass the bid?".format(self.name, kwargs["opp_bet"] + 1)
+            action_line = "{}, press 1 to bid or 0 to pass".format(self.name)
+            allowed_inputs = [0,1]
+        elif state == 2:
+            stage_name = "Bidding Phase - {}".format(kwargs["r_index"])
+            sub_heading = "That wasn't an integer :("
+            action_line = "Press anything to continue..."
+        elif state == 3:
+            stage_name = "Bidding Phase - {}".format(kwargs["r_index"])
+            sub_heading = "Invalid bet, please try again."
+            action_line = "Press anything to continue..."
+        elif state == 4:
+            stage_name = "Play Phase - {}".format(kwargs["r_index"])
+            action_line = "{}, select your card to play".format(self.name)
+            allowed_inputs = kwargs["valid_index"]
+        player_input = self.display_obj.update_game_console(stage_name=stage_name, heading=heading, sub_heading=sub_heading, 
+                                                            action_line=action_line, allowed_inputs=allowed_inputs, show_img=show_img)
+        return player_input
+
+    def getBet(self, Opponent_Bet, MAXIMUM_BET, display_obj, round_number):
+        self.display_obj = display_obj
         playerBet = -1
         while not playerBet in [range(0, MAXIMUM_BET+1)]:
             try:
-                print("{player_name}, this is your hand for reference".format(player_name=self.name))
-                self.showHand()
-                self.printScoreOfHand()
-                playerBet = int(input("%s Please input your bet between %s and %s or input 0 to pass/end betting:" %(self.name, Opponent_Bet + 1, MAXIMUM_BET)))
+                playerBet = int(self.update_GC_state(state=1, opp_bet=Opponent_Bet, r_index=round_number))
+
+                # Codes for game display on terminal
+                # print("{player_name}, this is your hand for reference".format(player_name=self.name))
+                # self.showHand()
+                # self.printScoreOfHand()
+                # playerBet = int(input("%s Please input your bet between %s and %s or input 0 to pass/end betting:" %(self.name, Opponent_Bet + 1, MAXIMUM_BET)))
             except ValueError:
                 # Error handling when input not an integer
+                _ = self.update_GC_state(state=2, opp_bet=Opponent_Bet, r_index=round_number)
                 print("That wasn't an integer :(")
                 continue
 
             if playerBet == 0:
                 # Player has passed the bidding
-                self.bid = playerBet
+                self.bid = 0
                 self.bidpass = True
                 return playerBet
-            elif playerBet <= Opponent_Bet:
-                print('Invalid bet, please try again.')
+            # elif playerBet <= Opponent_Bet:
+            #     _ = self.update_GC_state(state=3, opp_bet=Opponent_Bet)
+            #     print('Invalid bet, please try again.')
             else:
-                self.bid = playerBet
-                return playerBet
+                self.bid = Opponent_Bet+1
+                return self.bid
 
     def isBidPass(self, playerBet):
         if playerBet == 0:

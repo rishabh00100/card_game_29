@@ -16,7 +16,11 @@ class Game_of_29(MatchRound, Team, Player):
         self.team_list = [self.team1, self.team2]
 
     def start_match(self):
+        match_round_number = 1
         while True:
             if abs(self.team1.game_points) >= 5 or abs(self.team2.game_points) >= 5:
+                # If any team reaches +5 or -5 game points, then game over
+                # Declare final wineer
                 break
-            MatchRound(self.player_list, self.team_list)
+            MatchRound(self.player_list, self.team_list, match_round_number)
+            match_round_number += 1

@@ -14,7 +14,7 @@ class DeckOfCards(Card):
                 "Queen": {"Score": 0, "Win_Priority":6},
                 "King": {"Score": 0, "Win_Priority":5}
             }
-        self.COLORS = ['Heart', 'Diamonds', 'Spades', 'Clubs']
+        self.COLORS = ['Hearts', 'Diamonds', 'Spades', 'Clubs']
         self.contents = [Card(value, color, 1, self.CARD_GUIDE[value]["Score"], self.CARD_GUIDE[value]["Win_Priority"]) for value in list(self.CARD_GUIDE.keys()) for color in self.COLORS]
 
     def shuffleDeck(self):
