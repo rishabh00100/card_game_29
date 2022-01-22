@@ -7,7 +7,7 @@ The reason I picked up this project:
 
 ## Learnings from this project:
 1. Extensive use of OOPs to create instances of cards, players, bidding rounds, playing rounds
-2. Wanted to execute a quick GUI implementation for this game as my main goal is to focus on training the AI. I tried to use Unity and Kivy, but these tools are extensive and require significant learning curve. So, I decided to create the GUI using OpenCV
+2. Wanted to execute a quick GUI implementation for this game as my main goal is to focus on training the AI. I tried to use Unity and Kivy, but these tools are require significant learning curve and was not aligned to my goals for this project. So, I decided to create the GUI using OpenCV
 
 ## Rules of the game:
 https://www.pagat.com/jass/29.html
@@ -29,4 +29,7 @@ If you are a aspiring programmer/Data Scientist and wish to contribute to this p
 
 ## Start Playing the game:
 1. Navigate to the root of the repo using terminal
-2. Run "python3 Module.py"
+2. Run `python3 Module.py`
+
+## Demo:
+![alt text](https://github.com/rishabh00100/card_game_29/tree/master/modules/img/demo.gif "Demo")
