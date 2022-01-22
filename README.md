@@ -32,4 +32,5 @@ If you are a aspiring programmer/Data Scientist and wish to contribute to this p
 2. Run `python3 Module.py`
 
 ## Demo:
-![alt text](https://github.com/rishabh00100/card_game_29/tree/master/modules/img/demo.gif "Demo")
+![alt text](https://github.com/rishabh00100/card_game_29/blob/master/modules/img/demo.gif "Demo")
+<img src="https://github.com/rishabh00100/card_game_29/blob/master/modules/img/demo.gif" width="100" height="100" />
